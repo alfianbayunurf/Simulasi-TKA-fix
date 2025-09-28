@@ -1,0 +1,1849 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi TKA - Platform Belajar Interaktif</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap');
+        
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #8b5cf6;
+            --accent: #ec4899;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #1e293b;
+            --light: #f8fafc;
+        }
+        
+        * {
+            transition: all 0.3s ease;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .main-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .quiz-card {
+            background: white;
+            border-radius: 2rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .quiz-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent));
+        }
+        
+        .main-menu-btn {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            font-weight: bold;
+            padding: 1.25rem;
+            border-radius: 1rem;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3);
+            position: relative;
+            overflow: hidden;
+            z-index: 1;
+        }
+        
+        .main-menu-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(-100%);
+            transition: transform 0.6s ease;
+            z-index: -1;
+        }
+        
+        .main-menu-btn:hover::before {
+            transform: translateX(0);
+        }
+        
+        .main-menu-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 25px -5px rgba(99, 102, 241, 0.4);
+        }
+        
+        .option-btn {
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 1rem;
+            padding: 1.25rem;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: rgba(99, 102, 241, 0.1);
+            transition: width 0.3s ease;
+            z-index: -1;
+        }
+        
+        .option-btn:hover::after {
+            width: 100%;
+        }
+        
+        .option-btn:not(:disabled):hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .option-btn.correct {
+            background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+            border-color: var(--success);
+            color: #065f46;
+            font-weight: 600;
+        }
+        
+        .option-btn.incorrect {
+            background: linear-gradient(135deg, #fee2e2, #fecaca);
+            border-color: var(--danger);
+            color: #991b1b;
+            font-weight: 600;
+        }
+        
+        .progress-bar-inner {
+            transition: width 0.8s cubic-bezier(0.22, 0.61, 0.36, 1);
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 1rem;
+            height: 100%;
+        }
+        
+        .timer-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.25rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            position: relative;
+            background: white;
+        }
+        
+        .timer-circle::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid rgba(99, 102, 241, 0.2);
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .timer-circle.warning::before {
+            opacity: 1;
+            border-top-color: var(--warning);
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .loader {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        
+        .structured-explanation ol {
+            list-style-type: decimal;
+            padding-left: 1.5rem;
+        }
+        
+        .structured-explanation li {
+            margin-bottom: 0.5rem;
+            position: relative;
+            padding-left: 0.5rem;
+        }
+        
+        .structured-explanation li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.75rem;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+        }
+        
+        .recap-item {
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+            background: rgba(248, 250, 252, 0.7);
+            transition: all 0.3s ease;
+        }
+        
+        .recap-item:hover {
+            background: rgba(241, 245, 249, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        #material-content-container p {
+            color: #334155;
+            line-height: 1.7;
+            margin-bottom: 1rem;
+        }
+
+        #material-content-container h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 1.75rem;
+            margin-bottom: 1rem;
+            color: var(--primary-dark);
+            position: relative;
+            padding-left: 1rem;
+            border-bottom: 2px solid rgba(99, 102, 241, 0.2);
+            padding-bottom: 0.5rem;
+        }
+        
+        #material-content-container h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 5px;
+            height: 100%;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+        
+        #material-content-container ul {
+            list-style-type: none;
+            padding-left: 1rem;
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        #material-content-container li {
+            margin-bottom: 0.75rem;
+            position: relative;
+            padding-left: 2rem;
+            color: #475569;
+        }
+        
+        #material-content-container li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            top: 2px;
+            color: var(--success);
+            font-weight: bold;
+            font-size: 1.25rem;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .ripple {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .ripple::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.5);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .ripple:active::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+        
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .glow {
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            position: absolute;
+            animation: confetti-fall 3s linear forwards;
+            z-index: 1000;
+        }
+        
+        @keyframes confetti-fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        .tab-active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    
+    <main id="app-container" class="w-full max-w-4xl">
+        <div id="start-screen" class="main-card p-8 md:p-12 text-center fade-in">
+            <div class="mb-8 floating">
+                <h1 style="font-family: 'Poppins', sans-serif;" class="text-6xl md:text-7xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-indigo-600 mb-4">
+                    Simulasi TKA
+                </h1>
+                <div class="w-24 h-1 bg-gradient-to-r from-purple-600 to-indigo-600 mx-auto rounded-full"></div>
+            </div>
+            
+            <p class="text-slate-600 mb-12 text-lg max-w-2xl mx-auto">
+                Selamat datang para pejuang mimpi, semoga platform ini bisa membantu kalian dalam perjalanan yang melelahkan.
+            </p>
+            
+            <div class="space-y-5 max-w-md mx-auto">
+                <button id="create-quiz-menu-btn" class="main-menu-btn ripple">
+                    <i class="fas fa-plus-circle mr-2"></i> Buat Kuis
+                </button>
+                <button id="history-btn" class="main-menu-btn ripple">
+                    <i class="fas fa-history mr-2"></i> Riwayat
+                </button>
+                <button id="check-point-btn" class="main-menu-btn ripple">
+                    <i class="fas fa-trophy mr-2"></i> Check Point
+                </button>
+                <button id="materials-btn" class="main-menu-btn ripple">
+                    <i class="fas fa-book-open mr-2"></i> Materi
+                </button>
+            </div>
+            
+            <div class="mt-12 flex flex-wrap justify-center gap-4">
+                <div class="badge">
+                    <i class="fas fa-fire mr-1"></i> Populer
+                </div>
+                <div class="badge">
+                    <i class="fas fa-star mr-1"></i> 4.8 Rating
+                </div>
+                <div class="badge">
+                    <i class="fas fa-users mr-1"></i> 10K+ Pengguna
+                </div>
+            </div>
+            
+            <p id="user-info" class="text-xs text-slate-500 mt-8 break-all">ID Pengguna: Tidak Terdeteksi</p>
+        </div>
+
+        <div id="quiz-config-screen" class="hidden quiz-card p-8 md:p-12 slide-in">
+            <div class="flex justify-between items-center mb-8">
+                <h1 class="text-3xl md:text-4xl font-bold text-slate-800">
+                    <i class="fas fa-magic mr-3 text-purple-600"></i> Buat Kuis Dinamis
+                </h1>
+                <div class="text-purple-600 text-3xl pulse">
+                    <i class="fas fa-sparkles"></i>
+                </div>
+            </div>
+            
+            <div class="mb-8 text-left space-y-6">
+                <div>
+                    <label for="subject-select" class="block text-sm font-medium text-slate-700 mb-2">
+                        <i class="fas fa-book mr-2 text-indigo-500"></i> Pilih Mata Pelajaran TKA
+                    </label>
+                    <select id="subject-select" class="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="" disabled selected>-- Pilih Mata Pelajaran --</option>
+                        <option value="Sosiologi">Sosiologi</option>
+                        <option value="Matematika">Matematika</option>
+                        <option value="Bahasa Inggris">Bahasa Inggris</option>
+                        <option value="Bahasa Indonesia">Bahasa Indonesia</option>
+                        <option value="Sejarah">Sejarah</option>
+                        <option value="PKWU">PKWU (Prakarya dan Kewirausahaan)</option>
+                        <option value="Ekonomi">Ekonomi</option>
+                        <option value="Fisika">Fisika</option>
+                        <option value="Kimia">Kimia</option>
+                        <option value="Biologi">Biologi</option>
+                        <option value="Antropologi">Antropologi</option>
+                        <option value="PPKn">PPKn (Pendidikan Pancasila dan Kewarganegaraan)</option>
+                        <option value="Bahasa Jepang">Bahasa Jepang</option>
+                        <option value="Bahasa Korea">Bahasa Korea</option>
+                    </select>
+                </div>
+                
+                <div id="quiz-options-container" class="hidden space-y-6">
+                    <div>
+                        <label for="bab-select" id="bab-label" class="block text-sm font-medium text-slate-700 mb-2">
+                            <i class="fas fa-list mr-2 text-indigo-500"></i> Pilih Bab
+                        </label>
+                        <select id="bab-select" class="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="" disabled selected>-- Pilih Bab --</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="question-count-select" id="question-count-label" class="block text-sm font-medium text-slate-700 mb-2">
+                            <i class="fas fa-question-circle mr-2 text-indigo-500"></i> Jumlah Soal
+                        </label>
+                        <select id="question-count-select" class="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="10">10 Soal</option>
+                            <option value="20">20 Soal</option>
+                            <option value="30">30 Soal</option>
+                            <option value="40">40 Soal</option>
+                            <option value="50">50 Soal</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label for="time-limit-select" id="time-limit-label" class="block text-sm font-medium text-slate-700 mb-2">
+                            <i class="fas fa-clock mr-2 text-indigo-500"></i> Waktu per Soal
+                        </label>
+                        <select id="time-limit-select" class="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="none">Tanpa Waktu</option>
+                            <option value="10">10 detik</option>
+                            <option value="20" selected>20 detik</option>
+                            <option value="30">30 detik</option>
+                            <option value="45">45 detik</option>
+                            <option value="60">60 detik</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button id="generate-btn" class="w-full mt-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:from-purple-700 hover:to-indigo-700 transition-all transform hover:scale-[1.02] shadow-lg flex items-center justify-center disabled:opacity-50" disabled>
+                    <span id="generate-text">Buat Kuis</span>
+                    <div id="generate-loader" class="loader ml-3 hidden"></div>
+                </button>
+            </div>
+            
+            <button id="back-to-start-from-config-btn" class="w-full mt-4 bg-slate-800 text-white font-bold py-3 px-6 rounded-xl hover:bg-slate-900 transition-all transform hover:scale-[1.02] shadow-lg">
+                <i class="fas fa-arrow-left mr-2"></i> Kembali
+            </button>
+        </div>
+
+        <div id="quiz-screen" class="hidden">
+            <div class="mb-6 bg-white rounded-xl p-4 shadow-md">
+                <div class="flex justify-between items-center mb-3">
+                    <p class="text-sm font-medium text-slate-600">
+                        Pertanyaan <span id="question-counter" class="font-bold text-indigo-600">1</span> dari <span id="total-questions" class="font-bold">10</span>
+                    </p>
+                    <p class="text-sm font-medium text-slate-600">
+                        Skor: <span id="current-score" class="font-bold text-green-600">0</span>
+                    </p>
+                </div>
+                <div class="w-full bg-slate-200 rounded-full h-3 overflow-hidden">
+                    <div id="progress-bar" class="progress-bar-inner" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="quiz-card p-8 md:p-12">
+                <div class="flex flex-col sm:flex-row sm:items-start justify-between mb-8">
+                    <div class="flex-1 pr-0 sm:pr-6">
+                        <div id="story-text" class="text-base text-slate-700 bg-blue-50 rounded-xl p-4 mb-6 hidden border-l-4 border-blue-500"></div>
+                        <h2 id="question-text" class="text-xl md:text-2xl font-semibold text-slate-800"></h2>
+                    </div>
+                    
+                    <div class="flex items-center mt-6 sm:mt-0">
+                        <button id="speaker-btn" class="text-slate-600 hover:text-indigo-600 transition-colors p-3 rounded-full bg-slate-100 hover:bg-indigo-50">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <div class="timer-circle ml-4 text-slate-800 bg-white" id="timer-display">
+                            <span class="timer-text">20</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="space-y-4" id="options-container"></div>
+                
+                <div class="hidden mt-8 p-5 rounded-xl" id="feedback-container">
+                    <p class="text-base" id="feedback-text"></p>
+                    <button class="mt-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold py-2 px-4 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center justify-center" id="extra-explanation-btn">
+                        <span id="explanation-text">✨ Dapatkan Penjelasan Lebih Lanjut ✨</span>
+                        <div class="loader ml-2 hidden" id="explanation-loader"></div>
+                    </button>
+                    <div id="structured-explanation-container" class="mt-4 text-sm structured-explanation"></div>
+                </div>
+                
+                <button class="hidden w-full mt-6 bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold py-3 px-6 rounded-xl hover:from-slate-900 hover:to-black transition-all transform hover:scale-[1.02] shadow-lg" id="next-btn">
+                    Lanjut <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hidden quiz-card p-8 md:p-12 text-center slide-in">
+            <div class="mb-6">
+                <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-2">
+                    <i class="fas fa-flag-checkered mr-3 text-green-500"></i> Kuis Selesai!
+                </h1>
+                <p class="text-slate-600 text-lg">Kamu telah menyelesaikan kuis ini. Lihat hasilnya di bawah.</p>
+            </div>
+            
+            <div class="bg-gradient-to-br from-blue-50 to-indigo-100 border-2 border-blue-200 rounded-xl p-8 mb-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-blue-200 rounded-full -mr-16 -mt-16 opacity-50"></div>
+                <div class="absolute bottom-0 left-0 w-24 h-24 bg-indigo-200 rounded-full -ml-12 -mb-12 opacity-50"></div>
+                
+                <p class="text-lg text-slate-700 mb-2">Skor Akhirmu:</p>
+                <p class="text-6xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 my-4" id="final-score">0/10</p>
+                <p class="text-xl text-blue-800 font-semibold" id="score-percentage"></p>
+                
+                <div id="score-message" class="mt-4 text-lg font-medium"></div>
+            </div>
+            
+            <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+                <button class="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all transform hover:scale-[1.02] shadow-lg" id="repeat-btn">
+                    <i class="fas fa-redo mr-2"></i> Ulangi Kuis
+                </button>
+                <button class="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold py-3 px-6 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all transform hover:scale-[1.02] shadow-lg" id="new-quiz-btn">
+                    <i class="fas fa-plus mr-2"></i> Buat Kuis Baru
+                </button>
+            </div>
+            
+            <div id="confetti-container" class="fixed inset-0 pointer-events-none z-50"></div>
+        </div>
+
+        <div id="history-screen" class="hidden quiz-card p-8 md:p-12 slide-in">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-6">
+                <i class="fas fa-history mr-3 text-indigo-600"></i> Riwayat Kuis
+            </h1>
+            <p class="text-slate-600 mb-8 text-lg">Pelajari kembali hasilmu untuk evaluasi.</p>
+            
+            <div class="mb-6 flex flex-wrap gap-2">
+                <button class="tab-btn px-4 py-2 font-medium rounded-lg tab-active" data-filter="all">Semua</button>
+                <button class="tab-btn px-4 py-2 font-medium rounded-lg text-slate-500" data-filter="week">Minggu Ini</button>
+                <button class="tab-btn px-4 py-2 font-medium rounded-lg text-slate-500" data-filter="month">Bulan Ini</button>
+            </div>
+            
+            <div class="overflow-x-auto rounded-xl border border-slate-200 shadow-sm">
+                <table class="w-full table-auto text-sm text-left text-slate-500">
+                    <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">Tanggal</th>
+                            <th scope="col" class="px-6 py-3">Mata Pelajaran</th>
+                            <th scope="col" class="px-6 py-3">Bab</th>
+                            <th scope="col" class="px-6 py-3 text-right">Skor</th>
+                            <th scope="col" class="px-6 py-3">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body" class="bg-white divide-y divide-slate-200">
+                        <tr><td colspan="5" class="px-6 py-4 text-center text-slate-400">Memuat riwayat...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <button id="back-to-start-btn" class="w-full mt-8 bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold py-3 px-6 rounded-xl hover:from-slate-900 hover:to-black transition-all transform hover:scale-[1.02] shadow-lg">
+                <i class="fas fa-arrow-left mr-2"></i> Kembali ke Menu Utama
+            </button>
+        </div>
+
+        <div id="recap-screen" class="hidden quiz-card p-8 md:p-12 slide-in">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-6">
+                <i class="fas fa-clipboard-list mr-3 text-indigo-600"></i> Rekap Kuis
+            </h1>
+            <div class="space-y-6" id="recap-container"></div>
+            <button id="back-to-history-btn" class="w-full mt-8 bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold py-3 px-6 rounded-xl hover:from-slate-900 hover:to-black transition-all transform hover:scale-[1.02] shadow-lg">
+                <i class="fas fa-arrow-left mr-2"></i> Kembali ke Riwayat
+            </button>
+        </div>
+        
+        <div id="check-point-screen" class="hidden quiz-card p-8 md:p-12 slide-in">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-8 text-center">
+                <i class="fas fa-trophy mr-3 text-yellow-500"></i> Check Poin Performa
+            </h1>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-xl border border-blue-200 text-center">
+                    <div class="text-blue-600 text-4xl mb-3">
+                        <i class="fas fa-chart-pie"></i>
+                    </div>
+                    <p class="text-slate-600 text-lg mb-2">Rata-rata Akurasi</p>
+                    <p id="avg-accuracy" class="text-4xl font-bold text-blue-600">0%</p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-purple-50 to-pink-100 p-6 rounded-xl border border-purple-200 text-center">
+                    <div class="text-purple-600 text-4xl mb-3">
+                        <i class="fas fa-clipboard-check"></i>
+                    </div>
+                    <p class="text-slate-600 text-lg mb-2">Kuis Selesai</p>
+                    <p id="quizzes-completed" class="text-4xl font-bold text-purple-600">0</p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-teal-50 to-emerald-100 p-6 rounded-xl border border-teal-200 text-center">
+                    <div class="text-teal-600 text-4xl mb-3">
+                        <i class="fas fa-hourglass-half"></i>
+                    </div>
+                    <p class="text-slate-600 text-lg mb-2">Rata-rata Waktu</p>
+                    <p id="avg-time" class="text-4xl font-bold text-teal-600">0 dtk</p>
+                </div>
+            </div>
+            
+            <div class="bg-slate-50 p-6 rounded-xl border border-slate-200 mb-8">
+                 <h2 class="text-xl font-bold text-slate-700 mb-4">Grafik Performa</h2>
+                <div class="h-64">
+                    <canvas id="performance-chart" class="w-full"></canvas>
+                </div>
+            </div>
+            
+            <button id="back-to-start-from-stats-btn" class="w-full bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold py-3 px-6 rounded-xl hover:from-slate-900 hover:to-black transition-all transform hover:scale-[1.02] shadow-lg">
+                <i class="fas fa-arrow-left mr-2"></i> Kembali ke Menu Utama
+            </button>
+        </div>
+
+        <div id="materials-screen" class="hidden quiz-card p-8 md:p-12 slide-in">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800 mb-8 text-center">
+                <i class="fas fa-book-open mr-3 text-green-500"></i> Cari Materi Belajar
+            </h1>
+            
+            <div class="mb-8 space-y-6">
+                <div>
+                    <label for="material-subject-select" class="block text-sm font-medium text-slate-700 mb-2">
+                        <i class="fas fa-book mr-2 text-indigo-500"></i> Pilih Mata Pelajaran
+                    </label>
+                    <select id="material-subject-select" class="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="" disabled selected>-- Pilih Mata Pelajaran --</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label for="material-bab-select" class="block text-sm font-medium text-slate-700 mb-2">
+                        <i class="fas fa-list mr-2 text-indigo-500"></i> Pilih Bab
+                    </label>
+                    <select id="material-bab-select" class="w-full p-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" disabled>
+                        <option value="" disabled selected>-- Pilih Mata Pelajaran Dulu --</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button id="fetch-material-btn" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-bold py-3 px-6 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all transform hover:scale-[1.02] shadow-lg flex items-center justify-center disabled:opacity-50" disabled>
+                <span id="fetch-material-text">Cari Materi</span>
+                <div id="fetch-material-loader" class="loader ml-3 hidden"></div>
+            </button>
+            
+            <div id="material-content-container" class="mt-8 p-6 bg-slate-50 border border-slate-200 rounded-xl min-h-[200px] whitespace-pre-wrap text-slate-800">
+                <p class="text-slate-500 text-center">Materi akan ditampilkan di sini setelah Anda melakukan pencarian.</p>
+            </div>
+            
+            <button id="back-to-start-from-material-btn" class="w-full mt-8 bg-gradient-to-r from-slate-800 to-slate-900 text-white font-bold py-3 px-6 rounded-xl hover:from-slate-900 hover:to-black transition-all transform hover:scale-[1.02] shadow-lg">
+                <i class="fas fa-arrow-left mr-2"></i> Kembali ke Menu Utama
+            </button>
+        </div>
+
+        <div id="message-container" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex justify-center items-center p-4 z-50">
+            <div id="message-box" class="bg-white p-6 rounded-xl shadow-2xl text-center max-w-sm w-full transform transition-all">
+                <div class="text-4xl mb-4" id="message-icon">
+                    <i class="fas fa-info-circle text-blue-500"></i>
+                </div>
+                <p id="message-text" class="text-slate-700 font-semibold mb-6"></p>
+                <button id="message-close-btn" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-2 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all">
+                    OK
+                </button>
+            </div>
+        </div>
+    </main>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, getDoc, doc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    
+    // ... existing babData ...
+    const babData = {
+        "Sosiologi": [ "Lingkup Ilmu Sosiologi", "Nilai dan Norma Sosial", "Interaksi Sosial", "Proses Sosialisasi dan Pembentukan Kepribadian", "Perilaku Menyimpang dan Pengendalian Sosial", "Struktur Sosial dalam Masyarakat", "Konflik Sosial dan Integrasi Sosial", "Mobilitas Sosial", "Masyarakat Multikultural", "Perubahan Sosial", "Lembaga Sosial", "Metode Penelitian Sosial" ],
+        "Matematika": [ "Himpunan dan Operasi Bilangan", "Aljabar dan Aritmatika", "Eksponen, Bentuk Akar, dan Logaritma", "Persamaan dan Fungsi Kuadrat", "Sistem Persamaan dan Pertidaksamaan Linear", "Matriks", "Persamaan Lingkaran dan Garis Singgung", "Fungsi Komposisi dan Fungsi Invers", "Geometri (Bangun Datar dan Ruang)", "Trigonometri", "Barisan dan Deret", "Statistika dan Peluang", "Kalkulus", "Penalaran Analisis" ],
+        "Bahasa Inggris": [ "Main idea, main topic, and purpose of the text", "Inference", "Detailed information and stated unstated question", "Attitude expressed", "Synonyms", "Reference", "Preceding-following", "Two texts questions", "Cloze test", "Paraphrasing and summarizing", "Organization ideas" ],
+        "Bahasa Indonesia": [ "Penalaran Induktif", "Penalaran Deduktif", "Penalaran Kuantitatif", "Semantik", "Sintaksis", "Morfologi", "Paragraf", "Hipotesis Bahasa", "Ejaan yang Disempurnakan", "Konjungsi", "Kalimat Efektif", "Teks Saintek dan Sosial", "Teks Sastra" ],
+        "Sejarah": [ "Memahami Sejarah dan Penelitian", "Zaman Prasejarah Indonesia", "Peradaban Kuno di Dunia", "Penyiaran Agama Hindu-Buddha di Indonesia", "Perkembangan Islam di Indonesia", "Peristiwa Penting di Eropa-Amerika dan Pengaruhnya", "Perkembangan Kolonialisme dan Imperialisme Barat", "Perkembangan Berbagai Paham Baru Dunia", "Kemerdekaan Indonesia", "Perkembangan Setelah Perang Dunia Kedua" ],
+        "PKWU": ["Kerajinan", "Rekayasa", "Budidaya", "Pengolahan", "Haki", "Pemasaran", "Pelaporan keuangan", "Perencanaan"],
+        "Ekonomi": [ "Konsep Dasar Ilmu Ekonomi", "Masalah Ekonomi dan Sistem Ekonomi", "Peran Pelaku Ekonomi", "Permintaan, Penawaran, dan Keseimbangan Pasar", "Elastisitas Permintaan dan Penawaran", "Teori Perilaku Konsumen dan Produsen", "Bentuk-Bentuk Pasar", "Pendapatan Nasional", "Pembangunan dan Pertumbuhan Ekonomi", "Inflasi dan Pengangguran", "Uang dan Kebijakan Moneter", "Anggaran Pendapatan dan Belanja Negara (APBN) & Anggaran Pendapatan dan Belanja Daerah (APBD)", "Kebijakan Fiskal", "Perdagangan Internasional" ],
+        "Fisika": [ "Besaran, Satuan, dan Dimensi", "Kinematika dan Dinamika Gerak Lurus", "Hukum Newton tentang Gerak dan Gravitasi", "Usaha, Energi, dan Daya", "Impuls dan Momentum", "Gerak Rotasi dan Benda Tegar", "Fluida Statis dan Dinamis", "Suhu dan Kalor", "Teori Kinetik Gas dan Termodinamika", "Getaran, Gelombang, dan Bunyi", "Cahaya dan Optik", "Listrik Statis dan Dinamis", "Medan Magnet dan Induksi Elektromagnetik", "Fisika Modern" ],
+        "Kimia": [ "Struktur Atom dan Sistem Periodik", "Ikatan Kimia", "Termokimia", "Laju Reaksi dan Kesetimbangan Kimia", "Larutan Asam Basa dan Titrasi", "Kimia Karbon", "Stoikiometri", "Elektrokimia", "Sifat Koligatif Larutan", "Reaksi Kimia", "Hidrokarbon dan Minyak Bumi", "Termodinamika" ],
+        "Biologi": [ "Ruang Lingkup Biologi", "Keanekaragaman Hayati", "Virus dan Monera", "Protista dan Fungi", "Plantae dan Animalia", "Ekologi dan Ekosistem", "Sistem Pencernaan", "Sistem Sirkulasi", "Sistem Gerak", "Sistem Pernapasan", "Sistem Koordinasi", "Sistem Reproduksi", "Hereditas dan Genetika" ],
+        "Antropologi": [ "Konsep Dasar Antropologi", "Kebudayaan dan Masyarakat", "Suku Bangsa di Indonesia", "Sistem Kekerabatan", "Interaksi Lintas Budaya", "Struktur Sosial dan Perubahan Sosial" ],
+        "PPKn": [ "Pancasila sebagai Dasar Negara dan Ideologi", "Konstitusi dan Norma", "Sistem Pemerintahan dan Demokrasi", "Hak dan Kewajiban Warga Negara", "Bhinneka Tunggal Ika", "Negara Kesatuan Republik Indonesia" ],
+        "Bahasa Jepang": [ "Pengenalan Huruf (Hiragana, Katakana, Kanji)", "Tata Bahasa Dasar", "Ungkapan Sehari-hari", "Angka, Waktu, dan Tanggal", "Kosakata dan Frasa Umum", "Memperkenalkan Diri", "Makanan dan Minuman", "Belanja dan Tawar-menawar", "Arah dan Lokasi", "Hobi dan Kegiatan" ],
+        "Bahasa Korea": [ "Pengenalan Hangul (Huruf Korea)", "Tata Bahasa Dasar", "Ungkapan Sehari-hari", "Angka, Waktu, dan Tanggal", "Kosakata dan Frasa Umum", "Memperkenalkan Diri", "Makanan dan Minuman", "Belanja dan Tawar-menawar", "Arah dan Lokasi", "Hobi dan Kegiatan" ]
+    };
+
+    const startScreen = document.getElementById('start-screen');
+    const quizConfigScreen = document.getElementById('quiz-config-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const historyScreen = document.getElementById('history-screen');
+    const recapScreen = document.getElementById('recap-screen');
+    const checkPointScreen = document.getElementById('check-point-screen');
+    const materialsScreen = document.getElementById('materials-screen');
+    
+    const nextBtn = document.getElementById('next-btn');
+    const repeatBtn = document.getElementById('repeat-btn');
+    const newQuizBtn = document.getElementById('new-quiz-btn');
+    const generateBtn = document.getElementById('generate-btn');
+    const historyBtn = document.getElementById('history-btn');
+    const backToStartBtn = document.getElementById('back-to-start-btn');
+    const backToHistoryBtn = document.getElementById('back-to-history-btn');
+    const checkPointBtn = document.getElementById('check-point-btn');
+    const materialsBtn = document.getElementById('materials-btn');
+    const createQuizMenuBtn = document.getElementById('create-quiz-menu-btn');
+    const backToStartFromConfigBtn = document.getElementById('back-to-start-from-config-btn');
+    const backToStartFromStatsBtn = document.getElementById('back-to-start-from-stats-btn');
+    const backToStartFromMaterialBtn = document.getElementById('back-to-start-from-material-btn');
+    
+    const subjectSelect = document.getElementById('subject-select');
+    const babSelect = document.getElementById('bab-select');
+    const babLabel = document.getElementById('bab-label');
+    const questionCountSelect = document.getElementById('question-count-select');
+    const questionCountLabel = document.getElementById('question-count-label');
+    const timeLimitSelect = document.getElementById('time-limit-select');
+    const timeLimitLabel = document.getElementById('time-limit-label');
+    const quizOptionsContainer = document.getElementById('quiz-options-container');
+    const generateLoader = document.getElementById('generate-loader');
+    const generateText = document.getElementById('generate-text');
+    const userInfo = document.getElementById('user-info');
+    const historyTableBody = document.getElementById('history-table-body');
+    const recapContainer = document.getElementById('recap-container');
+    const messageContainer = document.getElementById('message-container');
+    const messageText = document.getElementById('message-text');
+    const messageCloseBtn = document.getElementById('message-close-btn');
+    const messageIcon = document.getElementById('message-icon');
+    const storyText = document.getElementById('story-text');
+    const questionText = document.getElementById('question-text');
+    const optionsContainer = document.getElementById('options-container');
+    const feedbackContainer = document.getElementById('feedback-container');
+    const feedbackText = document.getElementById('feedback-text');
+    const extraExplanationBtn = document.getElementById('extra-explanation-btn');
+    const explanationLoader = document.getElementById('explanation-loader');
+    const explanationText = document.getElementById('explanation-text');
+    const structuredExplanationContainer = document.getElementById('structured-explanation-container');
+    const questionCounter = document.getElementById('question-counter');
+    const totalQuestionsSpan = document.getElementById('total-questions');
+    const progressBar = document.getElementById('progress-bar');
+    const currentScoreSpan = document.getElementById('current-score');
+    const finalScore = document.getElementById('final-score');
+    const scorePercentage = document.getElementById('score-percentage');
+    const scoreMessage = document.getElementById('score-message');
+    const timerDisplay = document.getElementById('timer-display');
+    const speakerBtn = document.getElementById('speaker-btn');
+    const confettiContainer = document.getElementById('confetti-container');
+
+    // Stats elements
+    const avgAccuracy = document.getElementById('avg-accuracy');
+    const quizzesCompleted = document.getElementById('quizzes-completed');
+    const avgTime = document.getElementById('avg-time');
+    const performanceChartCanvas = document.getElementById('performance-chart');
+    let performanceChart = null; // To hold the chart instance
+
+    // Material elements
+    const materialSubjectSelect = document.getElementById('material-subject-select');
+    const materialBabSelect = document.getElementById('material-bab-select');
+    const fetchMaterialBtn = document.getElementById('fetch-material-btn');
+    const fetchMaterialText = document.getElementById('fetch-material-text');
+    const fetchMaterialLoader = document.getElementById('fetch-material-loader');
+    const materialContentContainer = document.getElementById('material-content-container');
+    
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let questions = [];
+    let quizRecap = [];
+    let timer;
+    let timePerQuestion;
+    let questionStartTime;
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
+    let db, auth, userId;
+    let unsubscribeHistory = null;
+    let isAuthReady = false;
+
+    const apiKey = "";
+    const GENERATION_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+    const TTS_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+
+    function showScreen(screenId) {
+        startScreen.classList.add('hidden');
+        quizConfigScreen.classList.add('hidden');
+        quizScreen.classList.add('hidden');
+        resultScreen.classList.add('hidden');
+        historyScreen.classList.add('hidden');
+        recapScreen.classList.add('hidden');
+        checkPointScreen.classList.add('hidden');
+        materialsScreen.classList.add('hidden');
+        
+        const screen = document.getElementById(screenId);
+        screen.classList.remove('hidden');
+        screen.classList.add('fade-in');
+    }
+
+    function showMessage(message, type = 'info') {
+        messageText.textContent = message;
+        messageContainer.classList.remove('hidden');
+        
+        // Set icon based on type
+        if (type === 'success') {
+            messageIcon.innerHTML = '<i class="fas fa-check-circle text-green-500"></i>';
+        } else if (type === 'error') {
+            messageIcon.innerHTML = '<i class="fas fa-exclamation-circle text-red-500"></i>';
+        } else {
+            messageIcon.innerHTML = '<i class="fas fa-info-circle text-blue-500"></i>';
+        }
+    }
+
+    function populateBabDropdown(subject, selectElement) {
+        selectElement.innerHTML = '<option value="" disabled selected>-- Pilih Bab --</option>';
+        if (subject) {
+             if (selectElement.id === 'bab-select') {
+                selectElement.innerHTML += '<option value="Uji Coba TKA">Uji Coba TKA</option>';
+            }
+            if (babData[subject]) {
+                babData[subject].forEach(bab => {
+                    const option = document.createElement('option');
+                    option.value = bab;
+                    option.textContent = bab;
+                    selectElement.appendChild(option);
+                });
+            }
+        }
+    }
+
+    function checkGenerateButtonState() {
+        const subject = subjectSelect.value;
+        const bab = babSelect.value;
+
+        if (subject) {
+            quizOptionsContainer.classList.remove('hidden');
+        } else {
+            quizOptionsContainer.classList.add('hidden');
+        }
+        
+        generateBtn.disabled = !(subject && bab);
+    }
+    
+    async function generateQuiz(subject, bab, questionCount) {
+        setLoadingState(generateBtn, generateText, generateLoader, true, "Membuat Soal...");
+        try {
+            let systemPrompt = "Anda adalah seorang ahli mata pelajaran TKA yang membuat soal pilihan ganda untuk ujian. Buat " + questionCount + " pertanyaan pilihan ganda (dengan 5 pilihan jawaban, 1 jawaban benar, dan 1 kalimat rasional singkat). Jika relevan dengan topik, buatlah teks bacaan atau cerita terpisah untuk setiap soal. Pastikan semua jawaban terkait dengan topik yang diberikan dan relevan untuk ujian TKA. Format keluaran harus berupa array JSON dari objek.";
+            
+            if (subject === "Matematika") {
+                systemPrompt = "Anda adalah seorang ahli matematika yang membuat soal pilihan ganda untuk ujian TKA. Buat " + questionCount + " pertanyaan. PENTING: Gunakan notasi matematika standar yang umum dan mudah dimengerti (seperti +, -, *, /, =, <, >, <=, >=, ^, sqrt(), x, y, a, b, dll.). **Hindari penggunaan simbol matematika yang ambigu, tidak lazim, atau terlalu kompleks yang mungkin tidak dirender dengan benar atau membingungkan siswa.** Soal harus memiliki 5 pilihan jawaban, 1 jawaban benar, dan rasional singkat untuk setiap pilihan. Format keluaran harus berupa array JSON dari objek.";
+            }
+
+            const userQuery = bab === "Uji Coba TKA"
+                ? `Buatkan saya ${questionCount} pertanyaan pilihan ganda tentang mata pelajaran ${subject} untuk ujian TKA.`
+                : `Buatkan saya ${questionCount} pertanyaan pilihan ganda tentang bab ${bab} dari mata pelajaran ${subject} untuk ujian TKA.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                "story": { "type": "STRING", "nullable": true },
+                                "question": { "type": "STRING" },
+                                "answerOptions": {
+                                    "type": "ARRAY",
+                                    "items": {
+                                        "type": "OBJECT",
+                                        "properties": {
+                                            "text": { "type": "STRING" },
+                                            "isCorrect": { "type": "BOOLEAN" },
+                                            "rationale": { "type": "STRING" }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            };
+
+            const response = await fetch(GENERATION_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const result = await response.json();
+            const jsonString = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!jsonString) throw new Error("Format respons tidak valid.");
+            
+            questions = JSON.parse(jsonString);
+            quizRecap = [];
+            
+            const timeLimit = timeLimitSelect.value;
+            timePerQuestion = timeLimit === 'none' ? null : parseInt(timeLimit, 10);
+            
+            startQuiz();
+
+        } catch (error) {
+            console.error("Gagal membuat kuis:", error);
+            showMessage("Gagal membuat kuis. Coba lagi.", 'error');
+        } finally {
+            setLoadingState(generateBtn, generateText, generateLoader, false, "Buat Kuis");
+        }
+    }
+
+    async function getExtraExplanation(question, answer) {
+        setLoadingState(extraExplanationBtn, explanationText, explanationLoader, true, "Mengambil Penjelasan...");
+        structuredExplanationContainer.classList.add('hidden');
+        try {
+            const prompt = `Berikan penjelasan rinci dan mendalam dalam format langkah-langkah berurutan tentang mengapa pernyataan ini benar: "${answer}" untuk pertanyaan ini: "${question}". Buat setiap langkah sebagai poin terpisah dalam array JSON.`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        items: { "type": "STRING" }
+                    }
+                }
+            };
+
+            const response = await fetch(GENERATION_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const result = await response.json();
+            const jsonString = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+            const explanationSteps = JSON.parse(jsonString);
+            
+            if (explanationSteps && explanationSteps.length > 0) {
+                const ol = document.createElement('ol');
+                explanationSteps.forEach(step => {
+                    const li = document.createElement('li');
+                    li.textContent = step;
+                    ol.appendChild(li);
+                });
+                structuredExplanationContainer.innerHTML = '';
+                structuredExplanationContainer.appendChild(ol);
+                structuredExplanationContainer.classList.remove('hidden');
+                structuredExplanationContainer.classList.add('fade-in');
+            } else {
+                structuredExplanationContainer.innerHTML = 'Maaf, penjelasan tambahan tidak dapat ditemukan.';
+                structuredExplanationContainer.classList.remove('hidden');
+            }
+        } catch (error) {
+            console.error("Gagal mendapatkan penjelasan:", error);
+            structuredExplanationContainer.innerHTML = 'Maaf, terjadi kesalahan. Tidak dapat memuat penjelasan tambahan.';
+            structuredExplanationContainer.classList.remove('hidden');
+        } finally {
+            setLoadingState(extraExplanationBtn, explanationText, explanationLoader, false, "✨ Dapatkan Penjelasan Lebih Lanjut ✨");
+        }
+    }
+
+    async function speakQuestion(text) {
+        speakerBtn.disabled = true;
+        try {
+            const payload = {
+                contents: [{
+                    parts: [{ text: `Ucapkan dalam bahasa Indonesia dengan suara yang jelas: ${text}` }]
+                }],
+                generationConfig: {
+                    responseModalities: ["AUDIO"],
+                    speechConfig: {
+                        voiceConfig: {
+                            prebuiltVoiceConfig: { voiceName: "Iapetus" }
+                        }
+                    }
+                },
+                model: "gemini-2.5-flash-preview-tts"
+            };
+
+            const response = await fetch(TTS_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const result = await response.json();
+            const audioData = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+            const mimeType = result?.candidates?.[0]?.content?.parts?.[0]?.inlineData?.mimeType;
+
+            if (audioData && mimeType) {
+                const sampleRateMatch = mimeType.match(/rate=(\d+)/);
+                if (!sampleRateMatch) throw new Error("Gagal mendapatkan sample rate.");
+                const sampleRate = parseInt(sampleRateMatch[1], 10);
+                const pcmData = base64ToArrayBuffer(audioData);
+                const pcm16 = new Int16Array(pcmData);
+                const wavBlob = pcmToWav(pcm16, sampleRate);
+                const audioUrl = URL.createObjectURL(wavBlob);
+                const audio = new Audio(audioUrl);
+                audio.play();
+            } else {
+                throw new Error("Data audio tidak ditemukan.");
+            }
+        } catch (error) {
+            console.error("Gagal memutar audio:", error);
+        } finally {
+            speakerBtn.disabled = false;
+        }
+    }
+
+    function base64ToArrayBuffer(base64) {
+        const binaryString = window.atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+            bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes.buffer;
+    }
+
+    function pcmToWav(pcmData, sampleRate) {
+        const numChannels = 1;
+        const bitsPerSample = 16;
+        const byteRate = sampleRate * numChannels * bitsPerSample / 8;
+        const blockAlign = numChannels * bitsPerSample / 8;
+        const buffer = new ArrayBuffer(44 + pcmData.byteLength);
+        const view = new DataView(buffer);
+
+        writeString(view, 0, 'RIFF');
+        view.setUint32(4, 36 + pcmData.byteLength, true);
+        writeString(view, 8, 'WAVE');
+        writeString(view, 12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true);
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, byteRate, true);
+        view.setUint16(32, blockAlign, true);
+        view.setUint16(34, bitsPerSample, true);
+        writeString(view, 36, 'data');
+        view.setUint32(40, pcmData.byteLength, true);
+        let offset = 44;
+        for (let i = 0; i < pcmData.length; i++, offset += 2) {
+            view.setInt16(offset, pcmData[i], true);
+        }
+
+        return new Blob([view], { type: 'audio/wav' });
+    }
+
+    function writeString(view, offset, string) {
+        for (let i = 0; i < string.length; i++) {
+            view.setUint8(offset + i, string.charCodeAt(i));
+        }
+    }
+
+    function setLoadingState(button, textElement, loaderElement, isLoading, newText) {
+        if (isLoading) {
+            button.disabled = true;
+            textElement.classList.add('hidden');
+            loaderElement.classList.remove('hidden');
+        } else {
+            button.disabled = false;
+            textElement.classList.remove('hidden');
+            loaderElement.classList.add('hidden');
+            textElement.textContent = newText;
+        }
+    }
+
+    function startQuiz() {
+        currentQuestionIndex = 0;
+        score = 0;
+        quizRecap = [];
+        totalQuestionsSpan.textContent = questions.length;
+        showScreen('quiz-screen');
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if (currentQuestionIndex < questions.length) {
+            const currentQuestion = questions[currentQuestionIndex];
+            questionCounter.textContent = currentQuestionIndex + 1;
+            progressBar.style.width = `${((currentQuestionIndex + 1) / questions.length) * 100}%`;
+            currentScoreSpan.textContent = score;
+
+            if (currentQuestion.story) {
+                storyText.textContent = currentQuestion.story;
+                storyText.classList.remove('hidden');
+            } else {
+                storyText.classList.add('hidden');
+            }
+
+            questionText.textContent = currentQuestion.question;
+            optionsContainer.innerHTML = '';
+            
+            currentQuestion.answerOptions.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option.text;
+                button.classList.add('w-full', 'p-4', 'text-left', 'border', 'border-slate-300', 'rounded-xl', 'option-btn', 'ripple');
+                button.onclick = () => selectAnswer(option, button);
+                
+                // Add animation delay for staggered effect
+                button.style.animationDelay = `${index * 0.1}s`;
+                button.classList.add('slide-in');
+                
+                optionsContainer.appendChild(button);
+            });
+
+            feedbackContainer.classList.add('hidden');
+            nextBtn.classList.add('hidden');
+            extraExplanationBtn.classList.add('hidden');
+            structuredExplanationContainer.classList.add('hidden');
+            
+            questionStartTime = Date.now();
+
+            if (timePerQuestion !== null) {
+                timerDisplay.classList.remove('hidden');
+                startTimer();
+            } else {
+                timerDisplay.classList.add('hidden');
+            }
+        } else {
+            showResults();
+        }
+    }
+
+    function startTimer() {
+        let timeLeft = timePerQuestion;
+        timerDisplay.textContent = timeLeft;
+        timerDisplay.classList.remove('bg-red-100', 'warning');
+        
+        clearInterval(timer); // Clear any existing timer
+
+        timer = setInterval(() => {
+            timeLeft--;
+            timerDisplay.textContent = timeLeft;
+            
+            if (timeLeft <= 5) {
+                timerDisplay.classList.add('warning');
+            }
+            
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                selectAnswer(null, null);
+            }
+        }, 1000);
+    }
+
+    function selectAnswer(selectedOption, button) {
+        if (timePerQuestion !== null) {
+            clearInterval(timer);
+        }
+        
+        const timeTaken = (Date.now() - questionStartTime) / 1000;
+        const currentQuestion = questions[currentQuestionIndex];
+        const correctOption = currentQuestion.answerOptions.find(option => option.isCorrect);
+        const isCorrect = selectedOption && selectedOption.isCorrect;
+        
+        if (isCorrect) {
+            score++;
+            feedbackContainer.classList.remove('bg-red-100');
+            feedbackContainer.classList.add('bg-green-100');
+            feedbackText.innerHTML = `<strong class="font-bold text-green-800"><i class="fas fa-check-circle mr-2"></i>Benar!</strong> ${selectedOption.rationale}`;
+            
+            // Add success animation
+            if (button) {
+                button.innerHTML += ' <i class="fas fa-check ml-2"></i>';
+            }
+        } else {
+            feedbackContainer.classList.remove('bg-green-100');
+            feedbackContainer.classList.add('bg-red-100');
+            if (!selectedOption) {
+                feedbackText.innerHTML = `<strong class="font-bold text-red-800"><i class="fas fa-clock mr-2"></i>Waktu habis!</strong> Jawaban yang benar adalah: ${correctOption.text}.<br>${correctOption.rationale}`;
+            } else {
+                feedbackText.innerHTML = `<strong class="font-bold text-red-800"><i class="fas fa-times-circle mr-2"></i>Salah.</strong> Jawaban yang benar adalah: ${correctOption.text}.<br>${correctOption.rationale}`;
+                
+                // Add error animation
+                button.innerHTML += ' <i class="fas fa-times ml-2"></i>';
+            }
+        }
+
+        Array.from(optionsContainer.children).forEach((btn, index) => {
+            const option = currentQuestion.answerOptions[index];
+            btn.disabled = true;
+            if (option.isCorrect) {
+                btn.classList.add('correct');
+                if (!isCorrect) {
+                    btn.innerHTML += ' <i class="fas fa-check ml-2"></i>';
+                }
+            } else if (btn === button) {
+                btn.classList.add('incorrect');
+            }
+        });
+
+        currentScoreSpan.textContent = score;
+        feedbackContainer.classList.remove('hidden');
+        feedbackContainer.classList.add('fade-in');
+        nextBtn.classList.remove('hidden');
+        extraExplanationBtn.classList.remove('hidden');
+
+        extraExplanationBtn.onclick = () => {
+            getExtraExplanation(currentQuestion.question, correctOption.text);
+        };
+
+        const userAnswerText = selectedOption ? selectedOption.text : "Waktu Habis";
+
+        quizRecap.push({
+            question: currentQuestion.question,
+            story: currentQuestion.story || null,
+            userAnswer: userAnswerText,
+            correctAnswer: correctOption.text,
+            isCorrect: isCorrect,
+            rationale: correctOption.rationale,
+            timeTaken: timeTaken,
+        });
+    }
+
+    function showResults() {
+        showScreen('result-screen');
+        finalScore.textContent = `${score}/${questions.length}`;
+        const percentage = Math.round((score / questions.length) * 100);
+        scorePercentage.textContent = `${percentage}% Jawaban Benar`;
+        
+        if (percentage >= 90) {
+            scoreMessage.innerHTML = '<i class="fas fa-trophy text-yellow-500 mr-2"></i> <span class="text-green-600 font-bold">Luar biasa!</span> Kamu telah menguasai materi ini dengan sempurna!';
+            createConfetti();
+        } else if (percentage >= 70) {
+            scoreMessage.innerHTML = '<i class="fas fa-thumbs-up text-blue-500 mr-2"></i> <span class="text-blue-600 font-bold">Bagus sekali!</span> Kamu sudah hampir menguasai materi ini.';
+        } else if (percentage >= 50) {
+            scoreMessage.innerHTML = '<i class="fas fa-book text-purple-500 mr-2"></i> <span class="text-purple-600 font-bold">Lumayan!</span> Terus belajar untuk meningkatkan pemahamanmu.';
+        } else {
+            scoreMessage.innerHTML = '<i class="fas fa-redo text-orange-500 mr-2"></i> <span class="text-orange-600 font-bold">Jangan menyerah!</span> Coba lagi dan pelajari materi dengan lebih seksama.';
+        }
+        
+        const subject = subjectSelect.value;
+        const bab = babSelect.value;
+        if (isAuthReady && userId) {
+            saveQuizResult(subject, bab, score, questions.length, quizRecap);
+        }
+    }
+
+    function createConfetti() {
+        const colors = ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'];
+        
+        for (let i = 0; i < 100; i++) {
+            setTimeout(() => {
+                const confettiPiece = document.createElement('div');
+                confettiPiece.classList.add('confetti');
+                confettiPiece.style.left = `${Math.random() * 100}%`;
+                confettiPiece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confettiPiece.style.width = `${Math.random() * 10 + 5}px`;
+                confettiPiece.style.height = confettiPiece.style.width;
+                confettiPiece.style.opacity = Math.random() * 0.7 + 0.3;
+                confettiPiece.style.transform = `rotate(${Math.random() * 360}deg)`;
+                
+                confettiContainer.appendChild(confettiPiece);
+                
+                setTimeout(() => {
+                    confettiPiece.remove();
+                }, 3000);
+            }, i * 30);
+        }
+    }
+
+    async function saveQuizResult(subject, bab, score, totalQuestions, recap) {
+        try {
+            await addDoc(collection(db, `artifacts/${appId}/users/${userId}/quiz_history`), {
+                subject: subject,
+                bab: bab,
+                score: score,
+                totalQuestions: totalQuestions,
+                recap: recap,
+                date: new Date().toISOString(),
+                timePerQuestion: timePerQuestion, // Save the time setting for this quiz
+            });
+        } catch (error) {
+            console.error("Gagal menyimpan hasil kuis:", error);
+        }
+    }
+
+    function loadQuizHistory() {
+        showScreen('history-screen');
+        historyTableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-4 text-center text-slate-400">Memuat riwayat...</td></tr>';
+        
+        if (unsubscribeHistory) {
+            unsubscribeHistory();
+        }
+
+        if (isAuthReady && userId) {
+            const historyColRef = collection(db, `artifacts/${appId}/users/${userId}/quiz_history`);
+            const q = query(historyColRef, orderBy("date", "desc"));
+            
+            unsubscribeHistory = onSnapshot(q, (querySnapshot) => {
+                const results = [];
+                querySnapshot.forEach((doc) => {
+                    results.push({ id: doc.id, ...doc.data() });
+                });
+                renderHistory(results);
+            }, (error) => {
+                console.error("Gagal memuat riwayat kuis:", error);
+                historyTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-red-500">Gagal memuat riwayat.</td></tr>`;
+            });
+        } else {
+            historyTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-slate-500">Masuk untuk melihat riwayat.</td></tr>`;
+        }
+    }
+    
+    function renderHistory(results) {
+        historyTableBody.innerHTML = '';
+        if (results.length === 0) {
+            historyTableBody.innerHTML = `<tr><td colspan="5" class="px-6 py-4 text-center text-slate-400">Belum ada riwayat kuis.</td></tr>`;
+            return;
+        }
+        
+        results.forEach((result, index) => {
+            const date = new Date(result.date).toLocaleDateString("id-ID", {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+            const percentage = Math.round((result.score / result.totalQuestions) * 100);
+            const scoreColor = percentage >= 80 ? 'text-green-600' : percentage >= 60 ? 'text-yellow-600' : 'text-red-600';
+            
+            const row = document.createElement('tr');
+            row.className = 'bg-white border-b hover:bg-slate-50';
+            row.style.animationDelay = `${index * 0.05}s`;
+            row.classList.add('slide-in');
+            
+            row.innerHTML = `
+                <td class="px-6 py-4 whitespace-nowrap">${date}</td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center">
+                        <i class="fas fa-book text-indigo-500 mr-2"></i>
+                        ${result.subject}
+                    </span>
+                </td>
+                <td class="px-6 py-4">${result.bab}</td>
+                <td class="px-6 py-4 text-right font-medium ${scoreColor}">${result.score} / ${result.totalQuestions} (${percentage}%)</td>
+                <td class="px-6 py-4 text-center">
+                    <button class="recap-btn bg-blue-500 text-white px-3 py-1 rounded-lg hover:bg-blue-600 transition-all" data-doc-id="${result.id}">
+                        <i class="fas fa-eye mr-1"></i> Lihat
+                    </button>
+                </td>
+            `;
+            historyTableBody.appendChild(row);
+        });
+    }
+
+    async function showRecap(docId) {
+        showScreen('recap-screen');
+        recapContainer.innerHTML = '<p class="text-center text-slate-500">Memuat rekap...</p>';
+
+        try {
+            const docRef = doc(db, `artifacts/${appId}/users/${userId}/quiz_history`, docId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                if (data.recap) {
+                    recapContainer.innerHTML = '';
+                    
+                    data.recap.forEach((item, index) => {
+                        const isCorrect = item.isCorrect;
+                        const icon = isCorrect 
+                            ? `<i class="fas fa-check-circle text-green-500 mr-2"></i>`
+                            : `<i class="fas fa-times-circle text-red-500 mr-2"></i>`;
+                        const userAnswerClass = isCorrect ? 'text-green-600' : 'text-red-600';
+
+                        const recapItem = document.createElement('div');
+                        recapItem.className = 'recap-item';
+                        recapItem.style.animationDelay = `${index * 0.1}s`;
+                        recapItem.classList.add('fade-in');
+                        
+                        const storyHtml = item.story ? `<p class="text-sm bg-blue-50 rounded-lg p-3 mb-3 border-l-4 border-blue-500">${item.story}</p>` : '';
+
+                        recapItem.innerHTML = `
+                            <div class="flex justify-between items-start mb-3">
+                                <h3 class="font-bold text-slate-800">Soal ${index + 1}</h3>
+                                <span class="${userAnswerClass} font-medium">${icon}${isCorrect ? 'Benar' : 'Salah'}</span>
+                            </div>
+                            <p class="text-slate-700 mb-3">${item.question}</p>
+                            ${storyHtml}
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                <div class="bg-slate-50 p-3 rounded-lg">
+                                    <p class="text-sm font-medium text-slate-600 mb-1">Jawaban Anda:</p>
+                                    <p class="${userAnswerClass} font-medium">${item.userAnswer}</p>
+                                </div>
+                                <div class="bg-green-50 p-3 rounded-lg">
+                                    <p class="text-sm font-medium text-slate-600 mb-1">Jawaban Benar:</p>
+                                    <p class="text-green-600 font-medium">${item.correctAnswer}</p>
+                                </div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <p class="text-sm font-medium text-slate-600 mb-1">Penjelasan:</p>
+                                <p class="text-slate-700">${item.rationale}</p>
+                            </div>
+                        `;
+                        recapContainer.appendChild(recapItem);
+                    });
+                } else {
+                    recapContainer.innerHTML = '<p class="text-center text-red-500">Rekap tidak ditemukan untuk riwayat ini.</p>';
+                }
+            } else {
+                recapContainer.innerHTML = '<p class="text-center text-red-500">Dokumen tidak ditemukan.</p>';
+            }
+        } catch (error) {
+            console.error("Gagal memuat rekap:", error);
+            recapContainer.innerHTML = '<p class="text-center text-red-500">Terjadi kesalahan saat memuat rekap.</p>';
+        }
+    }
+    
+    async function loadCheckPoin() {
+        showScreen('check-point-screen');
+        if (!isAuthReady || !userId) {
+            avgAccuracy.textContent = "N/A";
+            quizzesCompleted.textContent = "N/A";
+            avgTime.textContent = "N/A";
+            showMessage("Silakan masuk untuk melihat statistik.");
+            return;
+        }
+
+        const historyColRef = collection(db, `artifacts/${appId}/users/${userId}/quiz_history`);
+        const q = query(historyColRef, orderBy("date", "asc")); 
+
+        if (unsubscribeHistory) unsubscribeHistory();
+
+        unsubscribeHistory = onSnapshot(q, (querySnapshot) => {
+            const results = [];
+            querySnapshot.forEach((doc) => {
+                results.push({ id: doc.id, ...doc.data() });
+            });
+
+            if (results.length === 0) {
+                avgAccuracy.textContent = "0%";
+                quizzesCompleted.textContent = "0";
+                avgTime.textContent = "0 dtk";
+                if(performanceChart) performanceChart.destroy();
+                return;
+            }
+
+            let totalScore = 0;
+            let totalQuestions = 0;
+            let totalTimeTaken = 0;
+            let timedQuestionsCount = 0;
+
+            results.forEach(result => {
+                totalScore += result.score;
+                totalQuestions += result.totalQuestions;
+
+                if (result.timePerQuestion !== null && result.recap) {
+                    result.recap.forEach(item => {
+                        if (typeof item.timeTaken === 'number') {
+                            totalTimeTaken += item.timeTaken;
+                            timedQuestionsCount++;
+                        }
+                    });
+                }
+            });
+
+            const averageAccuracy = totalQuestions > 0 ? Math.round((totalScore / totalQuestions) * 100) : 0;
+            const averageTime = timedQuestionsCount > 0 ? (totalTimeTaken / timedQuestionsCount).toFixed(1) : 0;
+            
+            avgAccuracy.textContent = `${averageAccuracy}%`;
+            quizzesCompleted.textContent = results.length;
+            avgTime.textContent = `${averageTime} dtk`;
+            
+            const chartLabels = results.map(r => new Date(r.date).toLocaleDateString('id-ID', {day: 'numeric', month: 'short'}));
+            const chartData = results.map(r => Math.round((r.score / r.totalQuestions) * 100));
+
+            if (performanceChart) {
+                performanceChart.destroy();
+            }
+
+            const ctx = performanceChartCanvas.getContext('2d');
+            performanceChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: chartLabels,
+                    datasets: [{
+                        label: 'Akurasi Kuis (%)',
+                        data: chartData,
+                        fill: true,
+                        borderColor: 'rgb(99, 102, 241)',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4,
+                        pointBackgroundColor: 'rgb(99, 102, 241)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(99, 102, 241)',
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { 
+                        y: { 
+                            beginAtZero: true, 
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            padding: 12,
+                            cornerRadius: 8,
+                            displayColors: false
+                        }
+                    }
+                }
+            });
+        }, (error) => {
+            console.error("Gagal memuat check point:", error);
+            avgAccuracy.textContent = "Error";
+            quizzesCompleted.textContent = "Error";
+            avgTime.textContent = "Error";
+        });
+    }
+
+    function renderStyledMaterial(text) {
+        const lines = text.split('\n');
+        let html = '';
+        let inList = false;
+
+        lines.forEach(line => {
+            line = line.trim();
+            if (line.startsWith('## ')) {
+                if (inList) { html += '</ul>'; inList = false; }
+                html += `<h2 class="text-xl font-bold text-slate-800 mb-3 mt-5 border-l-4 border-primary pl-3">${line.substring(3)}</h2>`;
+            } else if (line.startsWith('* ')) {
+                if (!inList) { html += '<ul class="space-y-3 pl-2">'; inList = true; }
+                html += `<li class="flex items-start"><span class="flex-shrink-0 mr-3 text-green-500"><i class="fas fa-check-circle"></i></span><span>${processInlineFormatting(line.substring(2))}</span></li>`;
+            } else if (line.trim() === '') {
+                 if (inList) { html += '</ul>'; inList = false; }
+            } else if (line) {
+                if (inList) { html += '</ul>'; inList = false; }
+                html += `<p class="text-slate-600 mb-3">${processInlineFormatting(line)}</p>`;
+            }
+        });
+
+        if (inList) { html += '</ul>'; }
+        return html;
+    }
+
+    function processInlineFormatting(line) {
+        return line.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-primary">$1</strong>');
+    }
+    
+    async function fetchAndDisplayMaterials() {
+        const subject = materialSubjectSelect.value;
+        const bab = materialBabSelect.value;
+        if (!subject || !bab) {
+            showMessage("Silakan pilih mata pelajaran dan bab terlebih dahulu.");
+            return;
+        }
+
+        setLoadingState(fetchMaterialBtn, fetchMaterialText, fetchMaterialLoader, true, "Mencari...");
+        materialContentContainer.innerHTML = '<p class="text-slate-500 text-center animate-pulse">Sedang membuat materi untuk Anda...</p>';
+
+        try {
+            const systemPrompt = "Peran Anda adalah sebagai seorang mentor yang sangat cerdas dan sabar. Anggaplah saya adalah seorang pemula yang tidak tahu apa-apa tentang topik ini. Tugas Anda adalah menciptakan materi pembelajaran yang **sangat mendasar, mendalam, dan luar biasa mudah dipahami**. Pecah konsep-konsep kompleks menjadi bagian-bagian kecil yang sederhana. Gunakan **analogi dan contoh dari kehidupan sehari-hari** sebanyak mungkin untuk menjelaskan setiap ide. Mulailah dari konsep paling dasar sebelum beralih ke yang lebih rumit. Struktur materi harus sebagai berikut: 1. **Judul Utama:** Buat judul yang jelas dan menarik. 2. **Analogi Pembuka:** Mulailah dengan sebuah analogi sederhana untuk memperkenalkan topik secara keseluruhan. 3. **Dasar-Dasar Konsep:** Jelaskan fondasi atau konsep paling dasar dari topik tersebut. Jangan berasumsi saya sudah tahu apapun. 4. **Pembahasan Mendalam:** Uraikan setiap poin kunci secara detail, satu per satu. Untuk setiap poin, berikan contoh konkret. 5. **Studi Kasus Sederhana (Jika memungkinkan):** Berikan satu contoh kasus singkat yang mengaplikasikan semua konsep yang telah dibahas. 6. **Kesimpulan Praktis:** Rangkum semua dalam bahasa yang sangat sederhana, fokus pada apa yang paling penting untuk diingat. Gunakan format markdown: `##` untuk judul, `**` untuk teks tebal (untuk istilah penting), dan `*` untuk poin-poin dalam daftar. Tujuannya adalah agar seseorang yang merasa 'bodoh' tentang topik ini bisa merasa 'pintar' dan percaya diri setelah membacanya.";
+            const userQuery = `Buatkan saya materi pembelajaran untuk mata pelajaran ${subject} tentang bab ${bab}.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userQuery }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+            };
+
+            const response = await fetch(GENERATION_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const result = await response.json();
+            const generatedText = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+            if (!generatedText) throw new Error("Gagal mendapatkan konten materi.");
+
+            materialContentContainer.innerHTML = renderStyledMaterial(generatedText);
+            materialContentContainer.classList.add('fade-in');
+
+        } catch (error) {
+            console.error("Gagal mengambil materi:", error);
+            materialContentContainer.innerHTML = `<p class="text-red-500 text-center">Maaf, terjadi kesalahan saat mengambil materi. Silakan coba lagi.</p>`;
+        } finally {
+            setLoadingState(fetchMaterialBtn, fetchMaterialText, fetchMaterialLoader, false, "Cari Materi");
+        }
+    }
+    
+    function populateMaterialSubjectDropdown() {
+        materialSubjectSelect.innerHTML = '<option value="" disabled selected>-- Pilih Mata Pelajaran --</option>';
+        Object.keys(babData).forEach(subject => {
+            const option = document.createElement('option');
+            option.value = subject;
+            option.textContent = subject;
+            materialSubjectSelect.appendChild(option);
+        });
+    }
+
+    // Event Listeners
+    nextBtn.addEventListener('click', () => {
+        currentQuestionIndex++;
+        loadQuestion();
+    });
+    
+    repeatBtn.addEventListener('click', () => {
+        startQuiz();
+    });
+    
+    newQuizBtn.addEventListener('click', () => {
+        showScreen('quiz-config-screen');
+    });
+
+    historyBtn.addEventListener('click', () => {
+        loadQuizHistory();
+    });
+    
+    createQuizMenuBtn.addEventListener('click', () => {
+        showScreen('quiz-config-screen');
+    });
+
+    backToStartFromConfigBtn.addEventListener('click', () => {
+        showScreen('start-screen');
+    });
+
+    backToStartBtn.addEventListener('click', () => {
+        showScreen('start-screen');
+        if (unsubscribeHistory) {
+            unsubscribeHistory();
+        }
+    });
+
+    backToHistoryBtn.addEventListener('click', () => {
+        showScreen('history-screen');
+    });
+
+    historyTableBody.addEventListener('click', (event) => {
+        const button = event.target.closest('.recap-btn');
+        if (button) {
+            const docId = button.dataset.docId;
+            showRecap(docId);
+        }
+    });
+
+    subjectSelect.addEventListener('change', (event) => {
+        const selectedSubject = event.target.value;
+        populateBabDropdown(selectedSubject, babSelect);
+        checkGenerateButtonState();
+    });
+
+    babSelect.addEventListener('change', () => {
+        checkGenerateButtonState();
+    });
+
+    generateBtn.addEventListener('click', () => {
+        const subject = subjectSelect.value;
+        const bab = babSelect.value;
+        const questionCount = questionCountSelect.value;
+        if (subject && bab && questionCount) {
+            generateQuiz(subject, bab, questionCount);
+        } else {
+            showMessage("Silakan lengkapi semua pilihan.", 'error');
+        }
+    });
+
+    speakerBtn.addEventListener('click', () => {
+        speakQuestion(questions[currentQuestionIndex].question);
+    });
+
+    messageCloseBtn.addEventListener('click', () => {
+        messageContainer.classList.add('hidden');
+    });
+    
+    checkPointBtn.addEventListener('click', loadCheckPoin);
+
+    materialsBtn.addEventListener('click', () => {
+        showScreen('materials-screen');
+        if (materialSubjectSelect.options.length <= 1) {
+            populateMaterialSubjectDropdown();
+        }
+    });
+
+    backToStartFromStatsBtn.addEventListener('click', () => {
+        showScreen('start-screen');
+        if (unsubscribeHistory) unsubscribeHistory();
+        if (performanceChart) performanceChart.destroy();
+    });
+
+    backToStartFromMaterialBtn.addEventListener('click', () => {
+        showScreen('start-screen');
+    });
+
+    materialSubjectSelect.addEventListener('change', (event) => {
+        const selectedSubject = event.target.value;
+        populateBabDropdown(selectedSubject, materialBabSelect);
+        materialBabSelect.disabled = !selectedSubject;
+        fetchMaterialBtn.disabled = true;
+    });
+
+    materialBabSelect.addEventListener('change', () => {
+        fetchMaterialBtn.disabled = !materialBabSelect.value;
+    });
+
+    fetchMaterialBtn.addEventListener('click', fetchAndDisplayMaterials);
+    
+    // Tab filtering for history
+    document.querySelectorAll('.tab-btn').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(t => {
+                t.classList.remove('tab-active');
+                t.classList.add('text-slate-500');
+            });
+            tab.classList.add('tab-active');
+            tab.classList.remove('text-slate-500');
+            
+            // In a real app, this would filter the history data
+            // For demo purposes, we'll just show a message
+            const filter = tab.dataset.filter;
+            if (filter !== 'all') {
+                showMessage(`Filtering by: ${filter}`, 'info');
+            }
+        });
+    });
+    
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    
+    onAuthStateChanged(auth, async (user) => {
+        isAuthReady = true;
+        if (user) {
+            userId = user.uid;
+            userInfo.textContent = `ID Pengguna: ${userId}`;
+        } else {
+            try {
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Otentikasi Firebase gagal:", error);
+                userInfo.textContent = "ID Pengguna: Gagal Autentikasi";
+            }
+        }
+    });
+
+</script>
+</body>
+</html>
+
